@@ -103,4 +103,12 @@ RSpec.describe JSVariableParser do
       expect(JSVariableParser.new(js).variables).to eq(["hoge", "index"])
     end
   end
+
+  # TODO: Support string literal
+  context "when '`this is a ${penName}`" do 
+    let(:js) { "`this is a ${penName}`" }
+    it "cannot detect penName" do 
+      expect(JSVariableParser.new(js).variables).to eq([])
+    end
+  end
 end

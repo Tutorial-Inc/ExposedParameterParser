@@ -20,6 +20,8 @@ class JSVariableParser
       # Skip ''
       skip_quote_closure("'")
       # Skip ``
+      # String format literal is not Supported 
+      # eg. `this is a ${penName}` is not supported
       skip_quote_closure("`")
       
       # Skip [] space comma...
