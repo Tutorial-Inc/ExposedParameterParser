@@ -1,0 +1,454 @@
+# ブラウザを開く
++open_browser_1:
+  action>: OpenBrowser
+  url: 'https://ja-jp.wantedly.com'
+  lang: 'ja-JP'
+  headless: true
+  plugins: ["stealth"]
+
+# ログインクリック
++click_1:
+  action>: Click
+  browser: +open_browser_1
+  selector: 'div#about_root_japan header > ul > li:nth-child(1) > a'
+  confirm: true
+  ignoreError: true
+
+# インプット - ログインID入力
++type_text_1:
+  action>: TypeText
+  browser: +click_1
+  selector: 'input#login_user_email'
+  text: ${username}
+  clearValue: false
+  ignoreError: true
+
+# インプット - パスワード入力
++type_password_1:
+  action>: TypePassword
+  browser: +type_text_1
+  selector: 'input#login_user_password'
+  password: ${password}
+  ignoreError: true
+
+# ログインボタンクリック
++click_2:
+  action>: Click
+  browser: +type_password_1
+  selector: 'form#login_new_user input[name="commit"]'
+  confirm: true
+  waitAfter: 2000
+  ignoreError: true
+
+# スクリプトを実行
++run_script_4:
+  action>: RunScript
+  code: "let x = isNaN(${\"offer\"})\nif (x === false && String(${\"offer\"}).length === 6){\n return \"ID\"\n}"
+
+# 変数に保存
++store_value_14:
+  action>: StoreValue
+  key: idOrName
+  value: +run_script_4
+
+# IDのとき
++if_3:
+  if>: ${idOrName === "ID"}
+  _do:
+
+    # 募集中の求人ページへ遷移
+    +go_to_2:
+      action>: GoTo
+      browser: +click_2
+      url: 'https://www.wantedly.com/enterprise/projects?select=open'
+
+    # 「募集中」のテキストを取得
+    +get_text_1:
+      action>: GetText
+      browser: +go_to_2
+      selector: '.open > a'
+      ignoreError: true
+
+    # 募集中の求人数のtextを変数に保存
+    +store_value_17:
+      action>: StoreValue
+      key: offerNumberText
+      value: +get_text_1
+
+    # 募集中の求人数を抽出
+    +run_script_8:
+      action>: RunScript
+      code: "var x = ${String(\"offerNumberText\")};\nlet offerNumber = x.split(\"(\")[1].split(\")\")[0];\nreturn offerNumber"
+
+    # 変数に保存
+    +store_value_18:
+      action>: StoreValue
+      key: offerNumber
+      value: +run_script_8
+
+    # 募集中の求人数からページ数を計算
+    +run_script_9:
+      action>: RunScript
+      code: "if (${ offerNumber }% 20 !== 0) {\n  pageNumber = Math.floor(${ offerNumber }/20)+1\n  return pageNumber\n}else if (${ offerNumber }% 20 === 0) {\n  pageNumber = Math.floor(${ offerNumber }/20)\n  return pageNumber\n}"
+
+    # 変数に保存
+    +store_value_19:
+      action>: StoreValue
+      key: offerPageNumber
+      value: +run_script_9
+
+    # breakを設定
+    +store_value_20:
+      action>: StoreValue
+      key: sendBreak
+      value: false
+
+    # 募集の数だけページ遷移する
+    +loop_2:
+      loop>: ${offerPageNumber}
+      _do:
+
+        # 真のとき
+
+        # 真のとき
+        +if_1:
+          if>: ${!sendBreak}
+          _do:
+
+            # テキストを取得
+            +get_text_2:
+              action>: GetText
+              browser: +go_to_2
+              selector: 'a[href="/enterprise/form/projects/${offer}/edit?page=employees"]'
+              ignoreError: true
+
+            # 変数に保存
+            +store_value_22:
+              action>: StoreValue
+              key: preOfferName
+              value: +get_text_2
+
+            # offerNameの改行を除去
+            +run_script_6:
+              action>: RunScript
+              code: "offerName = preOfferName.trim();\nreturn offerName;\n"
+
+            # 変数に保存
+            +store_value_12:
+              action>: StoreValue
+              key: offerName
+              value: +run_script_6
+
+            # スクリプトを実行
+            +run_script_10:
+              action>: RunScript
+              code: "if (${offerName === false}) {\n  return false;\n} else {\n  return true;\n}\n"
+
+            # 変数に保存
+            +store_value_23:
+              action>: StoreValue
+              key: sendBreak
+              value: +run_script_10
+
+            # 次ページに遷移する必要があるとき
+            +if_2:
+              if>: ${sendBreak === false}
+              _do:
+
+                # プルダウンをクリック
+
+                # プルダウンをクリック
+                +click_3:
+                  action>: Click
+                  browser: +go_to_2
+                  selector: '.next > a'
+                  confirm: true
+                  ignoreError: true
+
+# IDでないとき
++if_4:
+  if>: ${idOrName !== "ID"}
+  _do:
+
+    # 変数に保存
+    +store_value_21:
+      action>: StoreValue
+      key: offerName
+      value: ${offer}
+
+# スクリプトを実行
++run_script_5:
+  action>: RunScript
+  code: "let queryId = url.split(\"/\").pop();\nreturn queryId;\n"
+
+# 変数に保存
++store_value_24:
+  action>: StoreValue
+  key: queryId
+  value: +run_script_5
+
+# インプット - 検索条件URL
++go_to_1:
+  action>: GoTo
+  browser: +click_2
+  url: ${url}
+
+# Get Token
++inject_script_3:
+  action>: InjectScript
+  browser: +go_to_1
+  code: "let gqlBody = {\n  operationName: \"createAuthTokenFromSession\",\n  variables: {},\n  query:\n    \"mutation createAuthTokenFromSession {\\n  createAuthTokenFromSession\\n}\\n\"\n};\nlet gqlUrl = \"https://visit-gql.wantedly.com/graphql\";\nlet xhr = new XMLHttpRequest();\nxhr.open(\"POST\", gqlUrl, false);\nxhr.setRequestHeader(\"accept\", \"*/*\");\nxhr.setRequestHeader(\"content-type\", \"application/json\");\nxhr.withCredentials = true;\nxhr.send(JSON.stringify(gqlBody));\nxhr.response;\n"
+  returnValue: true
+
+# jwt を取り出し
++get_value_with_key_2:
+  action>: GetValueWithKey
+  object: +inject_script_3
+  key: 'data.createAuthTokenFromSession'
+
+# jwt を保存
++store_value_6:
+  action>: StoreValue
+  key: jwt
+  value: +get_value_with_key_2
+
+# Get Saved Scouts
++inject_script_1:
+  action>: InjectScript
+  browser: +go_to_1
+  code: "let gqlBody = {\n  operationName: \"ScoutSavedQueriesQuery\",\n  variables: {},\n  query:\n    \"query ScoutSavedQueriesQuery {\\n  scoutSavedQueries {\\n    ...ScoutSavedQueryFragment\\n    __typename\\n  }\\n}\\n\\nfragment ScoutSavedQueryFragment on ScoutSavedQuery {\\n  id\\n  creatorId\\n  mute\\n  read\\n  scoutQuery {\\n    ...ScoutQueryFragment\\n    __typename\\n  }\\n  title\\n  __typename\\n}\\n\\nfragment ScoutQueryFragment on ScoutQuery {\\n  filter {\\n    ...ScoutQueryFilterFragment\\n    __typename\\n  }\\n  keyword\\n  sortBy\\n  structuredKeyword {\\n    ...StructuredKeywordFragment\\n    __typename\\n  }\\n  __typename\\n}\\n\\nfragment ScoutQueryFilterFragment on ScoutFilter {\\n  age {\\n    ...ScoutFilterAgeFragment\\n    __typename\\n  }\\n  connection\\n  countries\\n  eagerness\\n  freeScout\\n  freshUser\\n  hasInternshipExperience\\n  interestedInYourCompany\\n  interestFromOtherCompany\\n  lastLogin\\n  locations\\n  newGrad\\n  occupations\\n  profiles\\n  projectBookmark\\n  projectView\\n  responsiveness\\n  __typename\\n}\\n\\nfragment ScoutFilterAgeFragment on ScoutFilterAge {\\n  from\\n  to\\n  __typename\\n}\\n\\nfragment StructuredKeywordFragment on StructuredKeyword {\\n  mustKeywords\\n  notKeywords\\n  preferredKeywords\\n  __typename\\n}\\n\"\n};\n\nlet gqlUrl = \"https://visit-gql.wantedly.com/graphql\";\nlet xhr = new XMLHttpRequest();\nxhr.open(\"POST\", gqlUrl, false);\nxhr.setRequestHeader(\"accept\", \"*/*\");\nxhr.setRequestHeader(\"Authorization\", \"Bearer ${jwt}\");\nxhr.setRequestHeader(\"content-type\", \"application/json\");\nxhr.withCredentials = true;\nxhr.send(JSON.stringify(gqlBody));\nxhr.response;\n"
+  returnValue: true
+
+# クエリ一覧の値を抽出
++get_value_with_key_3:
+  action>: GetValueWithKey
+  object: +inject_script_1
+  key: 'data.scoutSavedQueries'
+
+# クエリを配列に保存
++store_value_7:
+  action>: StoreValue
+  key: queries
+  value: +get_value_with_key_3
+
+# 目的の Query を取り出す
++run_script_2:
+  action>: RunScript
+  code: "return queries.filter(query => query.id === parseInt(queryId))[0];\n"
+
+# queryを抽出
++get_value_with_key_1:
+  action>: GetValueWithKey
+  object: +run_script_2
+  key: scoutQuery
+
+# 変数に保存
++store_value_3:
+  action>: StoreValue
+  key: scoutQuery
+  value: +get_value_with_key_1
+
+# スクリプトを実行
++run_script_1:
+  action>: RunScript
+  code: "var filter = scoutQuery.filter;\ndelete filter.__typename;\nfor (let [key, value] of Object.entries(filter)) {\n  if (value) {\n    delete value.__typename;\n  }\n}\nvar query = {\n  query: {\n    structuredKeyword: {\n      preferredKeywords: scoutQuery.structuredKeyword.preferredKeywords,\n      notKeywords: scoutQuery.structuredKeyword.notKeywords,\n      mustKeywords: scoutQuery.structuredKeyword.mustKeywords\n    },\n    keyword: scoutQuery.keyword,\n    sortBy: scoutQuery.sortBy,\n    filter: filter\n  }\n};\nreturn query;\n"
+
+# 変数に保存
++store_value_4:
+  action>: StoreValue
+  key: prettyQuery
+  value: +run_script_1
+
+# テキストを作成
++text_3:
+  action>: Text
+  text: ${JSON.stringify(prettyQuery)}
+
+# 検索対象人数を取得
++inject_script_2:
+  action>: InjectScript
+  browser: +go_to_1
+  code: "let variables = ${JSON.stringify(prettyQuery)};\nlet gqlBody = {\n  operationName: \"SearchScoutTotalCountQuery\",\n  variables: variables,\n  query:\n    \"query SearchScoutTotalCountQuery($query: ScoutQueryInput) {\\n  searchScout(query: $query) {\\n    totalCount\\n    __typename\\n  }\\n}\\n\"\n};\n\nlet gqlUrl = \"https://visit-gql.wantedly.com/graphql\";\nlet xhr = new XMLHttpRequest();\nxhr.open(\"POST\", gqlUrl, false);\nxhr.setRequestHeader(\"accept\", \"*/*\");\nxhr.setRequestHeader(\"Authorization\", \"Bearer ${jwt}\");\nxhr.setRequestHeader(\"content-type\", \"application/json\");\nxhr.withCredentials = true;\nxhr.send(JSON.stringify(gqlBody));\nJSON.parse(xhr.response).data.searchScout.totalCount;\n"
+  returnValue: true
+
+# 変数に保存
++store_value_5:
+  action>: StoreValue
+  key: usersCount
+  value: +inject_script_2
+
+# 変数に保存
++store_value_11:
+  action>: StoreValue
+  key: count
+  value: ${Math.min(limit, usersCount)}
+
+# 変数に保存
++store_value_8:
+  action>: StoreValue
+  key: perPage
+  value: 10
+
+# 変数に保存
++store_value_1:
+  action>: StoreValue
+  key: list
+  value: []
+
+# 繰り返し
++loop_1:
+  loop>: ${parseInt(count / perPage) + 1}
+  _do:
+
+    # 変数に保存
+    +store_value_9:
+      action>: StoreValue
+      key: page
+      value: ${i + 1}
+
+    # 変数に保存
+    +store_value_13:
+      action>: StoreValue
+      key: perPage
+      value: ${Math.min(parseInt(perPage), parseInt(count) - parseInt(i) * parseInt(perPage))}
+
+    # 真のとき
+    +if_2:
+      if>: ${perPage > 0}
+      _do:
+
+        # スカウト一覧を取得
+        +inject_script_4:
+          action>: InjectScript
+          browser: +go_to_1
+          code: "let variables = ${JSON.stringify(prettyQuery)};\nvariables.per = ${perPage};\nvariables.page = ${page};\nlet gqlBody = {\n  operationName: \"SearchScoutQuery\",\n  variables: variables,\n  query:\n    \"query SearchScoutQuery($per: Int!, $page: Int!, $query: ScoutQueryInput) {\\n  searchScout(per: $per, page: $page, query: $query) {\\n    totalCount\\n    searchUuid\\n    limited\\n    upgradeGuideType\\n    scoutUsers {\\n      ...ScoutUserListItemFragment\\n      __typename\\n    }\\n    __typename\\n  }\\n}\\n\\nfragment ScoutUserListItemFragment on ScoutUser {\\n  ...ScoutUserFragmentOfCardType\\n  ...CachedScoutUserProfileFragment\\n  user {\\n    ...UserForStockScoutUserFragment\\n    __typename\\n  }\\n  __typename\\n}\\n\\nfragment ScoutUserFragmentOfCardType on ScoutUser {\\n  id\\n  checkedCountLastMonth\\n  isFreshUser\\n  isPremiumUser\\n  isHidden\\n  projectView\\n  motivationLevel\\n  multiSendable\\n  resendable\\n  scoutable\\n  maskProfile\\n  lastSentMessage {\\n    messageId\\n    senderId\\n    sentAt\\n    status\\n    __typename\\n  }\\n  activity {\\n    loginedAt\\n    __typename\\n  }\\n  user {\\n    id\\n    name\\n    avatarUrl\\n    locale\\n    profile {\\n      id\\n      age\\n      gender\\n      localizedGender\\n      occupationType\\n      localizedOccupationType\\n      facebookUrl\\n      githubUrl\\n      hatenaUrl\\n      linkedinUrl\\n      twitterUrl\\n      __typename\\n    }\\n    __typename\\n  }\\n  stock {\\n    ...StockInfoFragment\\n    __typename\\n  }\\n  ...ScoutUserFragmentOfCardContent\\n  ...ScoutUserProfileHeaderFragment\\n  positiveAction {\\n    contentTitle\\n    actedAt\\n    actionType\\n    __typename\\n  }\\n  __typename\\n}\\n\\nfragment ScoutUserFragmentOfCardContent on ScoutUser {\\n  id\\n  profile {\\n    displayedFieldsList\\n    __typename\\n  }\\n  user {\\n    id\\n    profile {\\n      introduction\\n      statement\\n      workingHistories {\\n        ...WorkingHistoriesFragment\\n        __typename\\n      }\\n      academicRecords {\\n        ...AcademicRecordsFragment\\n        __typename\\n      }\\n      awards {\\n        ...AwardFragmentOfUserCard\\n        __typename\\n      }\\n      certificates {\\n        ...CertificateFragmentOfUserCard\\n        __typename\\n      }\\n      links {\\n        ...LinkFragmentOfUserCard\\n        __typename\\n      }\\n      portfolioItems {\\n        ...PortfolioFragmentOfUserCard\\n        __typename\\n      }\\n      writings {\\n        ...WritingFragmentOfUserCard\\n        __typename\\n      }\\n      __typename\\n    }\\n    skillTaggings {\\n      ...SkillTaggingFragment\\n      __typename\\n    }\\n    followingCompanyIds\\n    bookmarkedProjects {\\n      id\\n      title\\n      __typename\\n    }\\n    __typename\\n  }\\n  __typename\\n}\\n\\nfragment AwardFragmentOfUserCard on Award {\\n  id\\n  title\\n  awardedOn\\n  __typename\\n}\\n\\nfragment CertificateFragmentOfUserCard on Certificate {\\n  id\\n  title\\n  qualifiedOn\\n  __typename\\n}\\n\\nfragment LinkFragmentOfUserCard on Link {\\n  id\\n  url\\n  __typename\\n}\\n\\nfragment PortfolioFragmentOfUserCard on PortfolioItem {\\n  id\\n  title\\n  mediaItems {\\n    id\\n    imageUrl\\n    __typename\\n  }\\n  __typename\\n}\\n\\nfragment WritingFragmentOfUserCard on Writing {\\n  id\\n  url\\n  title\\n  __typename\\n}\\n\\nfragment WorkingHistoriesFragment on WorkingHistory {\\n  id\\n  company\\n  currentWorking\\n  description\\n  internship\\n  location\\n  position\\n  endedOn\\n  startedOn\\n  __typename\\n}\\n\\nfragment AcademicRecordsFragment on AcademicRecord {\\n  id\\n  attendedFor\\n  description\\n  major\\n  school\\n  graduatedOn\\n  __typename\\n}\\n\\nfragment SkillTaggingFragment on SkillTagging {\\n  id\\n  skillEndorsementsCount\\n  tag {\\n    id\\n    name\\n    __typename\\n  }\\n  __typename\\n}\\n\\nfragment ScoutUserProfileHeaderFragment on ScoutUser {\\n  id\\n  maskProfile\\n  user {\\n    id\\n    name\\n    rawCoverImageUrl\\n    rawAvatarUrl\\n    currentCompanyName\\n    currentCompanyPosition\\n    profile {\\n      id\\n      age\\n      tagline\\n      location\\n      academicRecords {\\n        ...AcademicRecordFragment\\n        __typename\\n      }\\n      githubUrl\\n      twitterUrl\\n      linkedinUrl\\n      facebookUrl\\n      hatenaUrl\\n      __typename\\n    }\\n    __typename\\n  }\\n  activity {\\n    ...ActivityFragment\\n    __typename\\n  }\\n  __typename\\n}\\n\\nfragment AcademicRecordFragment on AcademicRecord {\\n  id\\n  attendedFor\\n  description\\n  major\\n  school\\n  graduatedOn\\n  __typename\\n}\\n\\nfragment ActivityFragment on Activity {\\n  registeredAt\\n  loginedAt\\n  profileEditedAt\\n  __typename\\n}\\n\\nfragment StockInfoFragment on ScoutStock {\\n  id\\n  rate\\n  memo\\n  stockerId\\n  stocker {\\n    userId\\n    jobId\\n    user {\\n      id\\n      name\\n      __typename\\n    }\\n    __typename\\n  }\\n  stockedAt\\n  labels {\\n    ...StockInfoLabelFragment\\n    __typename\\n  }\\n  __typename\\n}\\n\\nfragment StockInfoLabelFragment on ScoutStockLabel {\\n  id\\n  name\\n  __typename\\n}\\n\\nfragment UserForStockScoutUserFragment on User {\\n  id\\n  name\\n  avatarUrl\\n  __typename\\n}\\n\\nfragment CachedScoutUserProfileFragment on ScoutUser {\\n  id\\n  maskProfile\\n  isPremiumUser\\n  user {\\n    id\\n    name\\n    rawCoverImageUrl\\n    rawAvatarUrl\\n    currentCompanyName\\n    currentCompanyPosition\\n    profile {\\n      id\\n      age\\n      tagline\\n      location\\n      academicRecords {\\n        ...AcademicRecordFragment\\n        __typename\\n      }\\n      githubUrl\\n      twitterUrl\\n      linkedinUrl\\n      facebookUrl\\n      hatenaUrl\\n      localizedGender\\n      introduction\\n      statement\\n      coverPost {\\n        ...CoverPostFragment\\n        __typename\\n      }\\n      workingHistories {\\n        ...WorkingHistoryFragment\\n        __typename\\n      }\\n      __typename\\n    }\\n    __typename\\n  }\\n  activity {\\n    ...ActivityFragment\\n    __typename\\n  }\\n  ...ProfileCheckLogFragment\\n  __typename\\n}\\n\\nfragment CoverPostFragment on CoverPost {\\n  id\\n  title\\n  postUrl\\n  image {\\n    id\\n    url\\n    __typename\\n  }\\n  authorName\\n  authorPosition\\n  __typename\\n}\\n\\nfragment WorkingHistoryFragment on WorkingHistory {\\n  id\\n  company\\n  currentWorking\\n  description\\n  internship\\n  location\\n  position\\n  endedOn\\n  startedOn\\n  __typename\\n}\\n\\nfragment ProfileCheckLogFragment on ScoutUser {\\n  user {\\n    locale\\n    profile {\\n      age\\n      occupationType\\n      gender\\n      __typename\\n    }\\n    __typename\\n  }\\n  __typename\\n}\\n\"\n};\n\nlet gqlUrl = \"https://visit-gql.wantedly.com/graphql\";\nlet xhr = new XMLHttpRequest();\nxhr.open(\"POST\", gqlUrl, false);\nxhr.setRequestHeader(\"accept\", \"*/*\");\nxhr.setRequestHeader(\"Authorization\", \"Bearer ${jwt}\");\nxhr.setRequestHeader(\"content-type\", \"application/json\");\nxhr.withCredentials = true;\nxhr.send(JSON.stringify(gqlBody));\nJSON.parse(xhr.response).data.searchScout.scoutUsers;"
+          returnValue: true
+
+        # 変数に保存
+        +store_value_10:
+          action>: StoreValue
+          key: users
+          value: +inject_script_4
+
+        # 真のとき
+
+        # 真のとき
+        +if_1:
+          if>: ${users}
+          _do:
+
+            # 各要素について繰り返す
+            +for_each_1:
+              for_each>:
+                user: ${users}
+              _do:
+
+                # 変数に保存
+                +store_value_2:
+                  action>: StoreValue
+                  key: sub
+                  value: ${user.id}
+
+                # 候補者の個人ページへ遷移
+                +go_to_2:
+                  action>: GoTo
+                  browser: +go_to_1
+                  url: 'https://admin.wantedly.com/scouts/users/${sub}'
+                  waitAfter: 2000
+
+                # スカウトメッセージを入力
+                +type_text_2:
+                  action>: TypeText
+                  browser: +go_to_2
+                  selector: '.sc-kgoBCf'
+                  text: ${template}
+                  clearValue: false
+                  ignoreError: true
+
+                # プルダウンをクリック
+
+                # プルダウンをクリック
+                +click_3:
+                  action>: Click
+                  browser: +type_text_2
+                  selector: '.MessageEditor__DropDownLabel-sc-1n20x8d-5'
+                  confirm: true
+                  ignoreError: true
+
+                # 選択する求人の要素を取得
+                +find_element_1:
+                  action>: FindElement
+                  browser: +click_3
+                  find_by: xpath
+                  value: '//p[contains(text(), "${offerName}")]'
+                  timeout: 30000
+                  visible: true
+
+                # 選択する求人をクリック
+                +click_4:
+                  action>: Click
+                  browser: +click_3
+                  selector: +find_element_1
+                  confirm: true
+                  ignoreError: true
+                  highResolution: true
+
+                # クリック
+                +click_5:
+                  action>: Click
+                  browser: +click_4
+                  selector: '.kcdjuK'
+                  confirm: true
+                  waitAfter: 2000
+                  ignoreError: true
+                  highResolution: true
+
+                # スカウトしたユーザーの情報を取得
+                +inject_script_5:
+                  action>: InjectScript
+                  browser: +click_5
+                  code: "let gqlBody = {\n  operationName: \"ScoutUserQuery\",\n  variables: { userId: ${ sub } },\n  query:\n    \"query ScoutUserQuery($userId: Int!) {\\n  scoutUserProfile(userId: $userId) {\\n    ...ScoutUserProfileModalFragment\\n    __typename\\n  }\\n}\\n\\nfragment ScoutUserProfileModalFragment on ScoutUser {\\n  ...ScoutUserProfileFragment\\n  ...ScoutUserMessageEditorFragment\\n  ...ProfileCheckLogFragment\\n  __typename\\n}\\n\\nfragment ScoutUserProfileFragment on ScoutUser {\\n  ...ScoutUserProfileHeaderFragment\\n  ...ScoutUserProfileBodyFragment\\n  isPremiumUser\\n  __typename\\n}\\n\\nfragment ScoutUserProfileHeaderFragment on ScoutUser {\\n  id\\n  maskProfile\\n  stock {\\n    id\\n    __typename\\n  }\\n  user {\\n    id\\n    name\\n    rawCoverImageUrl\\n    rawAvatarUrl\\n    currentCompanyName\\n    currentCompanyPosition\\n    profile {\\n      id\\n      age\\n      tagline\\n      location\\n      academicRecords {\\n        ...AcademicRecordFragment\\n        __typename\\n      }\\n      githubUrl\\n      twitterUrl\\n      linkedinUrl\\n      facebookUrl\\n      hatenaUrl\\n      __typename\\n    }\\n    __typename\\n  }\\n  activity {\\n    ...ActivityFragment\\n    __typename\\n  }\\n  __typename\\n}\\n\\nfragment AcademicRecordFragment on AcademicRecord {\\n  id\\n  attendedFor\\n  description\\n  major\\n  school\\n  graduatedOn\\n  __typename\\n}\\n\\nfragment ActivityFragment on Activity {\\n  registeredAt\\n  loginedAt\\n  profileEditedAt\\n  __typename\\n}\\n\\nfragment ScoutUserProfileBodyFragment on ScoutUser {\\n  id\\n  user {\\n    id\\n    profile {\\n      id\\n      introduction\\n      statement\\n      coverPost {\\n        ...CoverPostFragment\\n        __typename\\n      }\\n      academicRecords {\\n        ...AcademicRecordFragment\\n        __typename\\n      }\\n      workingHistories {\\n        ...WorkingHistoryFragment\\n        __typename\\n      }\\n      works {\\n        ...WorkFragment\\n        __typename\\n      }\\n      volunteerings {\\n        ...VolunteeringFragment\\n        __typename\\n      }\\n      seminars {\\n        ...SeminarFragment\\n        __typename\\n      }\\n      certificates {\\n        ...CertificateFragment\\n        __typename\\n      }\\n      awards {\\n        ...AwardFragment\\n        __typename\\n      }\\n      languages {\\n        ...LanguageFragment\\n        __typename\\n      }\\n      writings {\\n        ...WritingFragment\\n        __typename\\n      }\\n      localizedGender\\n      userTaggings {\\n        ...UserTaggingFragment\\n        __typename\\n      }\\n      links {\\n        ...UrlFragment\\n        __typename\\n      }\\n      attachmentFiles {\\n        ...AttachmentFileFragment\\n        __typename\\n      }\\n      portfolioItems {\\n        ...PortfolioFragment\\n        __typename\\n      }\\n      __typename\\n    }\\n    skillTaggings {\\n      ...SkillTaggingFragment\\n      __typename\\n    }\\n    __typename\\n  }\\n  sampledFriendRelations {\\n    ...SampledFriendRelationsFragment\\n    __typename\\n  }\\n  __typename\\n}\\n\\nfragment SkillTaggingFragment on SkillTagging {\\n  id\\n  skillEndorsementsCount\\n  tag {\\n    id\\n    name\\n    __typename\\n  }\\n  __typename\\n}\\n\\nfragment UrlFragment on Link {\\n  id\\n  url\\n  __typename\\n}\\n\\nfragment AttachmentFileFragment on AttachmentFile {\\n  id\\n  s3Url\\n  thumbnailS3Url\\n  __typename\\n}\\n\\nfragment PortfolioFragment on PortfolioItem {\\n  id\\n  title\\n  url\\n  madeOn\\n  description\\n  mediaItems {\\n    id\\n    imageUrl\\n    __typename\\n  }\\n  __typename\\n}\\n\\nfragment CoverPostFragment on CoverPost {\\n  id\\n  title\\n  postUrl\\n  image {\\n    id\\n    url\\n    __typename\\n  }\\n  authorName\\n  authorPosition\\n  __typename\\n}\\n\\nfragment SampledFriendRelationsFragment on FriendRelation {\\n  friend {\\n    id\\n    name\\n    avatarUrl\\n    __typename\\n  }\\n  comment\\n  __typename\\n}\\n\\nfragment WorkingHistoryFragment on WorkingHistory {\\n  id\\n  company\\n  currentWorking\\n  description\\n  internship\\n  location\\n  position\\n  endedOn\\n  startedOn\\n  __typename\\n}\\n\\nfragment WorkFragment on Work {\\n  id\\n  description\\n  endedOn\\n  endedOnStr\\n  privacyStatus\\n  startedOn\\n  startedOnStr\\n  title\\n  url\\n  __typename\\n}\\n\\nfragment VolunteeringFragment on Volunteering {\\n  id\\n  description\\n  title\\n  url\\n  startedOn\\n  endedOn\\n  __typename\\n}\\n\\nfragment SeminarFragment on Seminar {\\n  id\\n  description\\n  title\\n  url\\n  startedOn\\n  endedOn\\n  __typename\\n}\\n\\nfragment CertificateFragment on Certificate {\\n  id\\n  title\\n  qualifiedOn\\n  __typename\\n}\\n\\nfragment AwardFragment on Award {\\n  id\\n  title\\n  awardedOn\\n  __typename\\n}\\n\\nfragment LanguageFragment on Language {\\n  id\\n  level\\n  localizedLevel\\n  name\\n  localizedName\\n  __typename\\n}\\n\\nfragment WritingFragment on Writing {\\n  id\\n  url\\n  title\\n  writtenAt\\n  __typename\\n}\\n\\nfragment UserTaggingFragment on UserTagging {\\n  id\\n  categoryName\\n  __typename\\n}\\n\\nfragment ScoutUserMessageEditorFragment on ScoutUser {\\n  id\\n  user {\\n    id\\n    name\\n    userNames {\\n      ...UserNameFragment\\n      __typename\\n    }\\n    __typename\\n  }\\n  scoutable\\n  lastSentMessage {\\n    ...LastSentMessageFragment\\n    __typename\\n  }\\n  maskProfile\\n  __typename\\n}\\n\\nfragment UserNameFragment on UserName {\\n  firstName\\n  lastName\\n  language\\n  __typename\\n}\\n\\nfragment LastSentMessageFragment on LastSentMessage {\\n  messageId\\n  __typename\\n}\\n\\nfragment ProfileCheckLogFragment on ScoutUser {\\n  user {\\n    locale\\n    profile {\\n      age\\n      occupationType\\n      gender\\n      __typename\\n    }\\n    __typename\\n  }\\n  __typename\\n}\\n\"\n};\n\nlet gqlUrl = \"https://visit-gql.wantedly.com/graphql\";\nlet xhr = new XMLHttpRequest();\nxhr.open(\"POST\", gqlUrl, false);\nxhr.setRequestHeader(\"accept\", \"*/*\");\nxhr.setRequestHeader(\"Authorization\", \"Bearer ${jwt}\");\nxhr.setRequestHeader(\"content-type\", \"application/json\");\nxhr.withCredentials = true;\nxhr.send(JSON.stringify(gqlBody));\nJSON.parse(xhr.response).data. scoutUserProfile. scoutable;"
+                  returnValue: true
+
+                # scoutableパラメータを変数に保存
+                +store_value_16:
+                  action>: StoreValue
+                  key: scoutable
+                  value: +inject_script_5
+
+                # データを整形
+                +run_script_3:
+                  action>: RunScript
+                  code: "let userData = user.user;\nlet id = userData.id;\nlet name = userData.name;\nlet url = \"https://www.wantedly.com/users/\" + id;\nlet obj = { sub: id, name: name, url: url };\nif (scoutable) {\n  obj.error = { message: \"Failed to scout\" };\n}\nlist.push(obj);\nreturn list;\n"
+
+                # 変数に保存
+                +store_value_15:
+                  action>: StoreValue
+                  key: list
+                  value: +run_script_3
+
+# スクリプトを実行
++run_script_7:
+  action>: RunScript
+  code: "return list;\n"
+
+# テキストを作成
++text_1:
+  action>: Text
+  text: ${automation_id}
+
+# オブジェクトを作成
++create_object_1:
+  action>: CreateObject
+  object:
+    results: +run_script_7
+    automation_id: +text_1
+
+# HTTPリクエスト
++h_t_t_p_request_1:
+  action>: HTTPRequest
+  url: ${webhookUrl}
+  params: +create_object_1
+  method: POST
+  headers: ''
+  multipart: false

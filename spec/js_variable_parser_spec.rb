@@ -1,12 +1,12 @@
 require 'rspec'
-require_relative '../js_variable_parser'
+require_relative '../lib/js_variable_parser'
 
 RSpec.describe JSVariableParser do 
 
   context "when 'comma_not\'closed'" do 
     let(:js) { "comma_not'closed" }
     it "raises error" do 
-      expect { JSVariableParser.new(js).variables }.to raise_error
+      expect { JSVariableParser.new(js).variables }.to raise_error(StandardError)
     end
   end
 
