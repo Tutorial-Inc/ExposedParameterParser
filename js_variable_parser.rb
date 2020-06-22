@@ -2,20 +2,19 @@ require 'strscan'
 
 class JSVariableParser
 
-  attr_accessor :variables
+  attr_accessor :variables, :functions
 
   # @param {String} js JavaScript code as string
   def initialize(js)
     @buffer = StringScanner.new(js)
     @variables = []
+    @functions = []
     parse
   end
 
   def parse
     # Parse until end
     until @buffer.eos?
-      # Skip ()
-      skip_kakko
       # Skip ""
       skip_quote_closure("\"")
       # Skip ''
@@ -24,7 +23,7 @@ class JSVariableParser
       skip_quote_closure("`")
       
       # Skip [] space comma...
-      @buffer.skip(/[\W]/)
+      @buffer.skip(/[^a-zA-Z0-9\.]/)
 
       # Parse variable from code
       parse_variable
@@ -33,12 +32,18 @@ class JSVariableParser
 
   def parse_variable
     # Examples: 
-    # Allow moment().format('YYYY-MM-DD')
-    # Allow hogeNumber
-    # Allow hoge2
-    # Disallow 2hoge
-    # Disallow 123 123.123
-    variable = @buffer.scan(/[a-zA-Z]+[\w\d\.\(\)\'\"\-\_]*/)
+    # Detect moment().format('YYYY-MM-DD')
+    # Detect hogeNumber
+    # Detect hoge2
+    # Skip .hoge
+    # Skip 2hoge
+    # Skip 123 123.123
+    variable = @buffer.scan(/[a-zA-Z]+[\w\d]*/)
+
+    # Allow .format('YYYY-MM-DD')
+    # Allow .format(formatString)
+    # Skip format()
+    chainedFunction = @buffer.scan(/\.[a-zA-Z]+[\w\d]*/)
     
     # Skip 123
     # Skip 123.123
@@ -49,14 +54,9 @@ class JSVariableParser
       variable = variable.split('.').first.match(/[a-zA-Z]+\w*/)[0]
       @variables << variable
     end
-  end
 
-  def skip_kakko
-    # Detect start (
-    if @buffer.peek(1) == "("
-      @buffer.getch
-      # Find end
-      @buffer.scan_until(/\)/)
+    if chainedFunction
+      @functions << chainedFunction
     end
   end
 
@@ -65,7 +65,10 @@ class JSVariableParser
     if @buffer.peek(1) == "#{quote}"
       @buffer.getch
       # Find end
-      @buffer.scan_until(/#{quote}/)
+      matches = @buffer.scan_until(/#{quote}/)
+      unless matches      
+        raise StandardError.new("Quotes not balanced. Ecpected )")
+      end
     end
   end
 
