@@ -61,13 +61,24 @@ RSpec.describe ExternalParameterFinder do
     end
   end
 
-  context "when line api workfor" do 
+  context "when line api workflow" do 
     it "detects token" do 
       parser = ExternalParameterFinder.new(predefined_parameters)
       yaml = File.open('./spec/resource/line_api.yaml')
       params = parser.parse yaml
       expect(params.map { |el| el[:paramName] }).to eq([
         "user_id", "url"
+      ])
+    end
+  end
+
+  context "when workflow" do 
+    it "detects minutes, gmailProvider, slackProvider" do 
+      parser = ExternalParameterFinder.new(predefined_parameters)
+      yaml = File.open('./spec/resource/seminar_shelf_to_slack.yaml')
+      params = parser.parse yaml
+      expect(params.map { |el| el[:paramName] }).to eq([
+        "minutes", "gmailProvider", "slackProvider"
       ])
     end
   end

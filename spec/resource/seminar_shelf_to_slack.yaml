@@ -1,0 +1,59 @@
+# スクリプトを実行
++run_script_1:
+  action>: RunScript
+  code: "return moment()\n  .subtract(${minutes}, \"minutes\")\n  .unix();\n"
+
+# 変数に保存
++store_value_1:
+  action>: StoreValue
+  key: after
+  value: +run_script_1
+
+# Gmailを取得
++gmail_get_1:
+  action>: GmailGet
+  query: 'from:ss_support@innovation.co.jp after:${after}'
+  provider: ${gmailProvider}
+  limit: 30
+
+# 各要素について繰り返す
++for_each_1:
+  for_each>:
+    mail: +gmail_get_1
+  _do:
+
+    # テキストを作成
+    +text_1:
+      action>: Text
+      text: ${mail.body}
+
+    # 正規表現で検索
+    +match_text_1:
+      action>: MatchText
+      text: +text_1
+      regex: '/https:\/\/client\.seminarshelf\.com\/lead\/\d+/'
+      global: false
+
+    # リストから要素を取得
+    +get_item_from_list_1:
+      action>: GetItemFromList
+      list: +match_text_1
+      index: '0'
+
+    # 変数に保存
+    +store_value_2:
+      action>: StoreValue
+      key: url
+      value: +get_item_from_list_1
+
+    # テキストを作成
+    +text_2:
+      action>: Text
+      text: "*セミナーシェルフ動画視聴がありました。*\nこちらでチェック：${url}"
+
+    # Slackでメッセージを送信
+    +send_slack_message_1:
+      action>: SendSlackMessage
+      provider: ${slackProvider}
+      channel: '#contact_notifcation'
+      text: +text_2
