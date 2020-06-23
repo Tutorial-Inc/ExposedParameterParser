@@ -1,5 +1,5 @@
 require 'rspec'
-require_relative '../lib/js_variable_parser'
+require_relative '../lib/js_variable_parser/js_variable_parser'
 
 RSpec.describe JSVariableParser do 
 

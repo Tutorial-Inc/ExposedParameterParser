@@ -1,5 +1,5 @@
 require 'rspec'
-require_relative '../lib/external_parameter_finder'
+require_relative '../lib/js_variable_parser/external_parameter_finder'
 
 RESERVED_VARIABLES = [
   'PROJECT_ID',
