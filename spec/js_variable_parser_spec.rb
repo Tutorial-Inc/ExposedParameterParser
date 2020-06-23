@@ -10,6 +10,13 @@ RSpec.describe JSVariableParser do
     end
   end
 
+  context "when 'moment()'" do 
+    let(:js) { "moment()" }
+    it "detects moment" do 
+      expect(JSVariableParser.new(js).variables).to eq(["moment"])
+    end
+  end
+
   context "when 'moment().format('YYYY-MM-DD')'" do
     let(:js) { "moment().format('YYYY-MM-DD')" }
     it "detects moment" do 
@@ -111,4 +118,5 @@ RSpec.describe JSVariableParser do
       expect(JSVariableParser.new(js).variables).to eq([])
     end
   end
+
 end
