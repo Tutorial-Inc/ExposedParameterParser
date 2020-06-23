@@ -50,5 +50,27 @@ RSpec.describe ExternalParameterFinder do
     end
   end
 
+  context "when intercom api workfor" do 
+    it "detects token" do 
+      parser = ExternalParameterFinder.new(predefined_parameters)
+      yaml = File.open('./spec/resource/intercom_api.yaml')
+      params = parser.parse yaml
+      expect(params.map { |el| el[:paramName] }).to eq([
+        "token"
+      ])
+    end
+  end
+
+  context "when line api workfor" do 
+    it "detects token" do 
+      parser = ExternalParameterFinder.new(predefined_parameters)
+      yaml = File.open('./spec/resource/line_api.yaml')
+      params = parser.parse yaml
+      expect(params.map { |el| el[:paramName] }).to eq([
+        "user_id", "url"
+      ])
+    end
+  end
+
 end
 
