@@ -1,0 +1,77 @@
+# 変数に保存
++store_value_5:
+  action>: StoreValue
+  key: line_id
+  value: ${user_id}
+
+# ブラウザを開く
++open_browser_1:
+  action>: OpenBrowser
+  url: ${url}
+  userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36'
+  headless: true
+  plugins: ["stealth"]
+
+# スクリーンショットを撮る
++take_screenshot_1:
+  action>: TakeScreenshot
+  browser: +open_browser_1
+  full_page: false
+  type: png
+
+# 投稿情報を取得する
++inject_script_2:
+  action>: InjectScript
+  browser: +open_browser_1
+  code: "function getShortCode() {\n  let url = location.href;\n  return url.match(/(?<=p\\/).*(?=\\/)/)[0];\n}\n\nasync function getMediaInfo() {\n  let query = \"552bb33f4e58c7805d13d4f95da7d3a1\"; //投稿の詳細情報を取得\n  let shortCode = getShortCode(); //投稿ごとのクエリ\n  let promise = new Promise((resolve, reject) => {\n    let url =\n      \"https://www.instagram.com/graphql/query/?query_hash=\" +\n      query +\n      \"&variables=\";\n    let obj = {\n      shortcode: shortCode,\n      child_comment_count: 3,\n      fetch_comment_count: 40,\n      parent_comment_count: 24,\n      has_threaded_comments: true\n    };\n    let variables = JSON.stringify(obj);\n    let ajax = new XMLHttpRequest();\n    ajax.open(\"get\", url + encodeURIComponent(variables), false);\n    ajax.onreadystatechange = () => {\n      if (ajax.readyState == 4) {\n        resolve(JSON.parse(ajax.response));\n      }\n    };\n    ajax.send();\n  });\n  return await promise;\n}\ngetMediaInfo();\n"
+  returnValue: true
+
+# 変数に保存_投稿情報
++store_value_2:
+  action>: StoreValue
+  key: postData
+  value: +inject_script_2
+
+# スクリプトを実行_画像/動画URLを抽出
++run_script_2:
+  action>: RunScript
+  code: "let datas = postData.data.shortcode_media;\nlet images = datas.edge_sidecar_to_children;\nlet video = datas.video_url;\nlet result = [];\nif (!!images) {\n  result = images.edges.map(x => {\n    let max;\n    if (!!x.node.video_url) max = x.node.video_url;\n    if (!x.node.video_url) (max = x.node.display_url), (video = true);\n    return max;\n  });\n}\nif (!!video) result.push(video);\nif (!video) result.push(datas.display_url);\nreturn result;\n"
+
+# オブジェクトを作成
++create_object_1:
+  action>: CreateObject
+  object:
+    Content-Type: 'application/json; charset=UTF-8'
+    Authorization: 'Bearer [token]'
+
+# 各要素について繰り返す
++for_each_1:
+  for_each>:
+    image: +run_script_2
+  _do:
+
+    # 変数に保存
+    +store_value_4:
+      action>: StoreValue
+      key: postImage
+      value: ${image}
+
+    # スクリプトを実行_
+    +run_script_1:
+      action>: RunScript
+      code: "var type = postImage.indexOf(\"mp4\") > -1 ? \"video\" : \"image\";\nvar json = {\n  to: line_id,\n  messages: [\n    {\n      type: type,\n      originalContentUrl: postImage,\n      previewImageUrl: postImage\n    }\n  ]\n};\nreturn json;\n"
+
+    # 変数に保存
+    +store_value_1:
+      action>: StoreValue
+      key: body
+      value: +run_script_1
+
+    # HTTPリクエスト
+    +h_t_t_p_request_1:
+      action>: HTTPRequest
+      url: 'https://api.line.me/v2/bot/message/push'
+      params: ${JSON.stringify(body)}
+      method: POST
+      headers: +create_object_1
+      multipart: false

@@ -50,5 +50,49 @@ RSpec.describe ExternalParameterFinder do
     end
   end
 
+  context "when intercom api workfor" do 
+    it "detects token" do 
+      parser = ExternalParameterFinder.new(predefined_parameters)
+      yaml = File.open('./spec/resource/intercom_api.yaml')
+      params = parser.parse yaml
+      expect(params.map { |el| el[:paramName] }).to eq([
+        "token"
+      ])
+    end
+  end
+
+  context "when line api workflow" do 
+    it "detects token" do 
+      parser = ExternalParameterFinder.new(predefined_parameters)
+      yaml = File.open('./spec/resource/line_api.yaml')
+      params = parser.parse yaml
+      expect(params.map { |el| el[:paramName] }).to eq([
+        "user_id", "url"
+      ])
+    end
+  end
+
+  context "when seminarshelf to slack workflow" do 
+    it "detects minutes, gmailProvider, slackProvider" do 
+      parser = ExternalParameterFinder.new(predefined_parameters)
+      yaml = File.open('./spec/resource/seminar_shelf_to_slack.yaml')
+      params = parser.parse yaml
+      expect(params.map { |el| el[:paramName] }).to eq([
+        "minutes", "gmailProvider", "slackProvider"
+      ])
+    end
+  end
+
+  context "when wantedly scoutlist workflow" do 
+    it "detects email, password, queryId, spreadsheetProvider, sheetId" do 
+      parser = ExternalParameterFinder.new(predefined_parameters)
+      yaml = File.open('./spec/resource/wantedly_scout_list.yaml')
+      params = parser.parse yaml
+      expect(params.map { |el| el[:paramName] }).to eq([
+        "queryId", "spreadsheetProvider", "sheetId", "email", "password"
+      ])
+    end
+  end
+
 end
 

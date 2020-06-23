@@ -1,0 +1,189 @@
+# 検索したURLを設定
++text_2:
+  action>: Text
+  text: 'https://admin.wantedly.com/scouts/list/saved/${queryId}'
+
+# 既存のスプレッドシートを取得
++get_spreadsheet_1:
+  action>: GetSpreadsheet
+  provider: ${spreadsheetProvider}
+  spreadsheet_id: ${sheetId}
+
+# Wantedlyログイン
++open_browser_1:
+  action>: OpenBrowser
+  url: 'https://ja-jp.wantedly.com'
+  lang: 'ja-JP'
+  headless: true
+  plugins: ["stealth"]
+
+# ログインクリック
++click_1:
+  action>: Click
+  browser: +open_browser_1
+  selector: 'div#about_root_japan header > ul > li:nth-child(1) > a'
+  confirm: true
+  ignoreError: true
+
+# インプット - ログインID入力
++type_text_1:
+  action>: TypeText
+  browser: +click_1
+  selector: 'input#login_user_email'
+  text: ${email}
+  clearValue: false
+  ignoreError: true
+
+# インプット - パスワード入力
++type_password_1:
+  action>: TypePassword
+  browser: +type_text_1
+  selector: 'input#login_user_password'
+  password: ${password}
+  ignoreError: true
+
+# ログインボタンクリック
++click_2:
+  action>: Click
+  browser: +type_password_1
+  selector: 'form#login_new_user input[name="commit"]'
+  confirm: true
+  waitAfter: 2000
+  ignoreError: true
+
+# インプット - 検索条件URL
++go_to_1:
+  action>: GoTo
+  browser: +click_2
+  url: +text_2
+
+# Get Token
++inject_script_3:
+  action>: InjectScript
+  browser: +go_to_1
+  code: "let gqlBody = {\n  operationName: \"createAuthTokenFromSession\",\n  variables: {},\n  query:\n    \"mutation createAuthTokenFromSession {\\n  createAuthTokenFromSession\\n}\\n\"\n};\nlet gqlUrl = \"https://visit-gql.wantedly.com/graphql\";\nlet xhr = new XMLHttpRequest();\nxhr.open(\"POST\", gqlUrl, false);\nxhr.setRequestHeader(\"accept\", \"*/*\");\nxhr.setRequestHeader(\"content-type\", \"application/json\");\nxhr.withCredentials = true;\nxhr.send(JSON.stringify(gqlBody));\nxhr.response;\n"
+  returnValue: true
+
+# jwt を取り出し
++get_value_with_key_2:
+  action>: GetValueWithKey
+  object: +inject_script_3
+  key: 'data.createAuthTokenFromSession'
+
+# jwt を保存
++store_value_6:
+  action>: StoreValue
+  key: jwt
+  value: +get_value_with_key_2
+
+# Get Saved Scouts
++inject_script_1:
+  action>: InjectScript
+  browser: +go_to_1
+  code: "let gqlBody = {\n  operationName: \"ScoutSavedQueriesQuery\",\n  variables: {},\n  query:\n    \"query ScoutSavedQueriesQuery {\\n  scoutSavedQueries {\\n    ...ScoutSavedQueryFragment\\n    __typename\\n  }\\n}\\n\\nfragment ScoutSavedQueryFragment on ScoutSavedQuery {\\n  id\\n  creatorId\\n  mute\\n  read\\n  scoutQuery {\\n    ...ScoutQueryFragment\\n    __typename\\n  }\\n  title\\n  __typename\\n}\\n\\nfragment ScoutQueryFragment on ScoutQuery {\\n  filter {\\n    ...ScoutQueryFilterFragment\\n    __typename\\n  }\\n  keyword\\n  sortBy\\n  structuredKeyword {\\n    ...StructuredKeywordFragment\\n    __typename\\n  }\\n  __typename\\n}\\n\\nfragment ScoutQueryFilterFragment on ScoutFilter {\\n  age {\\n    ...ScoutFilterAgeFragment\\n    __typename\\n  }\\n  connection\\n  countries\\n  eagerness\\n  freeScout\\n  freshUser\\n  hasInternshipExperience\\n  interestedInYourCompany\\n  interestFromOtherCompany\\n  lastLogin\\n  locations\\n  newGrad\\n  occupations\\n  profiles\\n  projectBookmark\\n  projectView\\n  responsiveness\\n  __typename\\n}\\n\\nfragment ScoutFilterAgeFragment on ScoutFilterAge {\\n  from\\n  to\\n  __typename\\n}\\n\\nfragment StructuredKeywordFragment on StructuredKeyword {\\n  mustKeywords\\n  notKeywords\\n  preferredKeywords\\n  __typename\\n}\\n\"\n};\n\nlet gqlUrl = \"https://visit-gql.wantedly.com/graphql\";\nlet xhr = new XMLHttpRequest();\nxhr.open(\"POST\", gqlUrl, false);\nxhr.setRequestHeader(\"accept\", \"*/*\");\nxhr.setRequestHeader(\"Authorization\", \"Bearer ${jwt}\");\nxhr.setRequestHeader(\"content-type\", \"application/json\");\nxhr.withCredentials = true;\nxhr.send(JSON.stringify(gqlBody));\nxhr.response;\n"
+  returnValue: true
+
+# クエリ一覧の値を抽出
++get_value_with_key_3:
+  action>: GetValueWithKey
+  object: +inject_script_1
+  key: 'data.scoutSavedQueries'
+
+# クエリを配列に保存
++store_value_7:
+  action>: StoreValue
+  key: queries
+  value: +get_value_with_key_3
+
+# 目的の Query を取り出す
++run_script_2:
+  action>: RunScript
+  code: "return queries.filter(query => query.id === queryId)[0];\n"
+
+# queryを抽出
++get_value_with_key_1:
+  action>: GetValueWithKey
+  object: +run_script_2
+  key: scoutQuery
+
+# 変数に保存
++store_value_3:
+  action>: StoreValue
+  key: scoutQuery
+  value: +get_value_with_key_1
+
+# スクリプトを実行
++run_script_1:
+  action>: RunScript
+  code: "var query = {\n  query: {\n    structuredKeyword: {\n      preferredKeywords: scoutQuery.structuredKeyword.preferredKeywords,\n      notKeywords: scoutQuery.structuredKeyword.notKeywords,\n      mustKeywords: scoutQuery.structuredKeyword.mustKeywords\n    },\n    keyword: scoutQuery.keyword,\n    sortBy: scoutQuery.sortBy,\n    filter: {\n      responsiveness: scoutQuery.filter.responsiveness,\n      projectView: scoutQuery.filter.projectView,\n      projectBookmark: scoutQuery.filter.projectBookmark,\n      profiles: scoutQuery.filter.profiles,\n      occupations: scoutQuery.filter.occupations,\n      newGrad: scoutQuery.filter.newGrad,\n      locations: scoutQuery.filter.locations,\n      lastLogin: scoutQuery.filter.lastLogin,\n      interestFromOtherCompany: scoutQuery.filter.interestFromOtherCompany,\n      interestedInYourCompany: scoutQuery.filter.interestedInYourCompany,\n      hasInternshipExperience: scoutQuery.filter.hasInternshipExperience,\n      freshUser: scoutQuery.filter.freshUser,\n      freeScout: scoutQuery.filter.freeScout,\n      eagerness: scoutQuery.filter.eagerness,\n      countries: scoutQuery.filter.countries,\n      connection: scoutQuery.filter.connection,\n      age: {\n        from: scoutQuery.filter.age.from,\n        to: scoutQuery.filter.age.to\n      }\n    }\n  }\n};\nreturn query;\n"
+
+# 変数に保存
++store_value_4:
+  action>: StoreValue
+  key: prettyQuery
+  value: +run_script_1
+
+# テキストを作成
++text_3:
+  action>: Text
+  text: ${JSON.stringify(prettyQuery)}
+
+# 検索対象人数を取得
++inject_script_2:
+  action>: InjectScript
+  browser: +go_to_1
+  code: "let variables = ${JSON.stringify(prettyQuery)};\nlet gqlBody = {\n  operationName: \"SearchScoutTotalCountQuery\",\n  variables: variables,\n  query: \"query SearchScoutTotalCountQuery($query: ScoutQueryInput) {\\n  searchScout(query: $query) {\\n    totalCount\\n    __typename\\n  }\\n}\\n\"\n};\n\nlet gqlUrl = \"https://visit-gql.wantedly.com/graphql\";\nlet xhr = new XMLHttpRequest();\nxhr.open(\"POST\", gqlUrl, false);\nxhr.setRequestHeader(\"accept\", \"*/*\");\nxhr.setRequestHeader(\"Authorization\", \"Bearer ${jwt}\");\nxhr.setRequestHeader(\"content-type\", \"application/json\");\nxhr.withCredentials = true;\nxhr.send(JSON.stringify(gqlBody));\nJSON.parse(xhr.response).data.searchScout.totalCount;\n"
+  returnValue: true
+
+# 変数に保存
++store_value_5:
+  action>: StoreValue
+  key: usersCount
+  value: +inject_script_2
+
+# 変数に保存
++store_value_8:
+  action>: StoreValue
+  key: perPage
+  value: 10
+
+# 繰り返し
++loop_1:
+  loop>: ${parseInt(usersCount / perPage) + 1}
+  _do:
+
+    # 変数に保存
+    +store_value_9:
+      action>: StoreValue
+      key: page
+      value: ${i + 1}
+
+    # スカウト一覧を取得
+    +inject_script_4:
+      action>: InjectScript
+      browser: +go_to_1
+      code: "let variables = ${JSON.stringify(prettyQuery)};\nvariables.per = ${perPage};\nvariables.page = ${page};\nlet gqlBody = {\n  operationName: \"SearchScoutQuery\",\n  variables: variables,\n  query:\n    \"query SearchScoutQuery($per: Int!, $page: Int!, $query: ScoutQueryInput) {\\n  searchScout(per: $per, page: $page, query: $query) {\\n    totalCount\\n    searchUuid\\n    limited\\n    upgradeGuideType\\n    scoutUsers {\\n      ...ScoutUserListItemFragment\\n      __typename\\n    }\\n    __typename\\n  }\\n}\\n\\nfragment ScoutUserListItemFragment on ScoutUser {\\n  ...ScoutUserFragmentOfCardType\\n  ...CachedScoutUserProfileFragment\\n  user {\\n    ...UserForStockScoutUserFragment\\n    __typename\\n  }\\n  __typename\\n}\\n\\nfragment ScoutUserFragmentOfCardType on ScoutUser {\\n  id\\n  checkedCountLastMonth\\n  isFreshUser\\n  isPremiumUser\\n  isHidden\\n  projectView\\n  motivationLevel\\n  multiSendable\\n  resendable\\n  scoutable\\n  maskProfile\\n  lastSentMessage {\\n    messageId\\n    senderId\\n    sentAt\\n    status\\n    __typename\\n  }\\n  activity {\\n    loginedAt\\n    __typename\\n  }\\n  user {\\n    id\\n    name\\n    avatarUrl\\n    locale\\n    profile {\\n      id\\n      age\\n      gender\\n      localizedGender\\n      occupationType\\n      localizedOccupationType\\n      facebookUrl\\n      githubUrl\\n      hatenaUrl\\n      linkedinUrl\\n      twitterUrl\\n      __typename\\n    }\\n    __typename\\n  }\\n  stock {\\n    ...StockInfoFragment\\n    __typename\\n  }\\n  ...ScoutUserFragmentOfCardContent\\n  ...ScoutUserProfileHeaderFragment\\n  positiveAction {\\n    contentTitle\\n    actedAt\\n    actionType\\n    __typename\\n  }\\n  __typename\\n}\\n\\nfragment ScoutUserFragmentOfCardContent on ScoutUser {\\n  id\\n  profile {\\n    displayedFieldsList\\n    __typename\\n  }\\n  user {\\n    id\\n    profile {\\n      introduction\\n      statement\\n      workingHistories {\\n        ...WorkingHistoriesFragment\\n        __typename\\n      }\\n      academicRecords {\\n        ...AcademicRecordsFragment\\n        __typename\\n      }\\n      awards {\\n        ...AwardFragmentOfUserCard\\n        __typename\\n      }\\n      certificates {\\n        ...CertificateFragmentOfUserCard\\n        __typename\\n      }\\n      links {\\n        ...LinkFragmentOfUserCard\\n        __typename\\n      }\\n      portfolioItems {\\n        ...PortfolioFragmentOfUserCard\\n        __typename\\n      }\\n      writings {\\n        ...WritingFragmentOfUserCard\\n        __typename\\n      }\\n      __typename\\n    }\\n    skillTaggings {\\n      ...SkillTaggingFragment\\n      __typename\\n    }\\n    followingCompanyIds\\n    bookmarkedProjects {\\n      id\\n      title\\n      __typename\\n    }\\n    __typename\\n  }\\n  __typename\\n}\\n\\nfragment AwardFragmentOfUserCard on Award {\\n  id\\n  title\\n  awardedOn\\n  __typename\\n}\\n\\nfragment CertificateFragmentOfUserCard on Certificate {\\n  id\\n  title\\n  qualifiedOn\\n  __typename\\n}\\n\\nfragment LinkFragmentOfUserCard on Link {\\n  id\\n  url\\n  __typename\\n}\\n\\nfragment PortfolioFragmentOfUserCard on PortfolioItem {\\n  id\\n  title\\n  mediaItems {\\n    id\\n    imageUrl\\n    __typename\\n  }\\n  __typename\\n}\\n\\nfragment WritingFragmentOfUserCard on Writing {\\n  id\\n  url\\n  title\\n  __typename\\n}\\n\\nfragment WorkingHistoriesFragment on WorkingHistory {\\n  id\\n  company\\n  currentWorking\\n  description\\n  internship\\n  location\\n  position\\n  endedOn\\n  startedOn\\n  __typename\\n}\\n\\nfragment AcademicRecordsFragment on AcademicRecord {\\n  id\\n  attendedFor\\n  description\\n  major\\n  school\\n  graduatedOn\\n  __typename\\n}\\n\\nfragment SkillTaggingFragment on SkillTagging {\\n  id\\n  skillEndorsementsCount\\n  tag {\\n    id\\n    name\\n    __typename\\n  }\\n  __typename\\n}\\n\\nfragment ScoutUserProfileHeaderFragment on ScoutUser {\\n  id\\n  maskProfile\\n  user {\\n    id\\n    name\\n    rawCoverImageUrl\\n    rawAvatarUrl\\n    currentCompanyName\\n    currentCompanyPosition\\n    profile {\\n      id\\n      age\\n      tagline\\n      location\\n      academicRecords {\\n        ...AcademicRecordFragment\\n        __typename\\n      }\\n      githubUrl\\n      twitterUrl\\n      linkedinUrl\\n      facebookUrl\\n      hatenaUrl\\n      __typename\\n    }\\n    __typename\\n  }\\n  activity {\\n    ...ActivityFragment\\n    __typename\\n  }\\n  __typename\\n}\\n\\nfragment AcademicRecordFragment on AcademicRecord {\\n  id\\n  attendedFor\\n  description\\n  major\\n  school\\n  graduatedOn\\n  __typename\\n}\\n\\nfragment ActivityFragment on Activity {\\n  registeredAt\\n  loginedAt\\n  profileEditedAt\\n  __typename\\n}\\n\\nfragment StockInfoFragment on ScoutStock {\\n  id\\n  rate\\n  memo\\n  stockerId\\n  stocker {\\n    userId\\n    jobId\\n    user {\\n      id\\n      name\\n      __typename\\n    }\\n    __typename\\n  }\\n  stockedAt\\n  labels {\\n    ...StockInfoLabelFragment\\n    __typename\\n  }\\n  __typename\\n}\\n\\nfragment StockInfoLabelFragment on ScoutStockLabel {\\n  id\\n  name\\n  __typename\\n}\\n\\nfragment UserForStockScoutUserFragment on User {\\n  id\\n  name\\n  avatarUrl\\n  __typename\\n}\\n\\nfragment CachedScoutUserProfileFragment on ScoutUser {\\n  id\\n  maskProfile\\n  isPremiumUser\\n  user {\\n    id\\n    name\\n    rawCoverImageUrl\\n    rawAvatarUrl\\n    currentCompanyName\\n    currentCompanyPosition\\n    profile {\\n      id\\n      age\\n      tagline\\n      location\\n      academicRecords {\\n        ...AcademicRecordFragment\\n        __typename\\n      }\\n      githubUrl\\n      twitterUrl\\n      linkedinUrl\\n      facebookUrl\\n      hatenaUrl\\n      localizedGender\\n      introduction\\n      statement\\n      coverPost {\\n        ...CoverPostFragment\\n        __typename\\n      }\\n      workingHistories {\\n        ...WorkingHistoryFragment\\n        __typename\\n      }\\n      __typename\\n    }\\n    __typename\\n  }\\n  activity {\\n    ...ActivityFragment\\n    __typename\\n  }\\n  ...ProfileCheckLogFragment\\n  __typename\\n}\\n\\nfragment CoverPostFragment on CoverPost {\\n  id\\n  title\\n  postUrl\\n  image {\\n    id\\n    url\\n    __typename\\n  }\\n  authorName\\n  authorPosition\\n  __typename\\n}\\n\\nfragment WorkingHistoryFragment on WorkingHistory {\\n  id\\n  company\\n  currentWorking\\n  description\\n  internship\\n  location\\n  position\\n  endedOn\\n  startedOn\\n  __typename\\n}\\n\\nfragment ProfileCheckLogFragment on ScoutUser {\\n  user {\\n    locale\\n    profile {\\n      age\\n      occupationType\\n      gender\\n      __typename\\n    }\\n    __typename\\n  }\\n  __typename\\n}\\n\"\n};\n\nlet gqlUrl = \"https://visit-gql.wantedly.com/graphql\";\nlet xhr = new XMLHttpRequest();\nxhr.open(\"POST\", gqlUrl, false);\nxhr.setRequestHeader(\"accept\", \"*/*\");\nxhr.setRequestHeader(\"Authorization\", \"Bearer ${jwt}\");\nxhr.setRequestHeader(\"content-type\", \"application/json\");\nxhr.withCredentials = true;\nxhr.send(JSON.stringify(gqlBody));\nJSON.parse(xhr.response).data.searchScout.scoutUsers;\n"
+      returnValue: true
+
+    # 変数に保存
+    +store_value_10:
+      action>: StoreValue
+      key: users
+      value: +inject_script_4
+
+    # テキストを作成
+    +text_1:
+      action>: Text
+      text: ${JSON.stringify(users[0])}
+
+    # データを整形
+    +run_script_3:
+      action>: RunScript
+      code: "let sheetTable = [];\nfor (let user of users) {\n  let data = [];\n  let userData = user.user;\n  let profile = userData.profile;\n  data[0] = moment().format(\"YYYY-MM-DD\");\n  data[1] = \"https://admin.wantedly.com/scouts/users/\" + String(userData.id);\n  data[2] = '=IMAGE(INDIRECT(\"J\"&ROW()))';\n  data[3] = userData.name + \"(\" + String(profile.age) + \")\";\n  data[4] =\n    userData.currentCompanyPosition + \" at \" + userData.currentCompanyName;\n  data[5] = profile.academicRecords.join(\" / \");\n  data[6] = profile.location;\n  data[7] = profile.introduction;\n  data[8] = profile.statement;\n  data[9] = userData.avatarUrl;\n  sheetTable.push(data);\n}\nreturn sheetTable;\n"
+
+    # 末尾に値を追加
+    +append_values_1:
+      action>: AppendValues
+      spreadsheet: +get_spreadsheet_1
+      range: A1
+      values: +run_script_3

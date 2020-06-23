@@ -1,0 +1,24 @@
+# オブジェクトを作成_header
++create_object_1:
+  action>: CreateObject
+  object:
+    Authorization: 'Bearer ${token}'
+    Accept: 'application/json'
+
+# オブジェクトを作成_body
++create_object_2:
+  action>: CreateObject
+  object:
+    query:
+      field: 'source.author.id'
+      operator: '='
+      value: 5d1d5c7dd87ab60e127d8d25
+
+# HTTPリクエスト
++h_t_t_p_request_1:
+  action>: HTTPRequest
+  url: 'https://api.intercom.io/conversations/search'
+  params: +create_object_2
+  method: POST
+  headers: +create_object_1
+  multipart: false
