@@ -61,17 +61,22 @@ class ExternalParameterFinder
 
   def initialize(predefined_variables)
     @param_names = []
-    @params = []
     @stored_variables = []
     @predefined_variables = GLOBAL_OBJECTS + predefined_variables
   end
 
-  def parse yaml
+  def parse yaml, &block
     store_values YAML.safe_load yaml
+    params = []
     @param_names.each do |param_name|
-      @params.push(name: param_name, paramName: param_name, description: '', type: 'Text', value: '')
+      if block_given?
+        element = yield(param_name)
+      else
+        element = { name: param_name, paramName: param_name, description: '', type: 'Text', value: '' }
+      end
+      params.push(element)
     end
-    @params
+    params
   end
 
   def store_values parsed_yaml

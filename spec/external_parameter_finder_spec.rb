@@ -18,14 +18,35 @@ predefined_parameters = RESERVED_VARIABLES + STANDARD_LIBRARIES
 RSpec.describe ExternalParameterFinder do
 
   context "when parse wantedly scout dry run yaml" do 
-    it "detects username, password, url, limit, automation_id, webhookUrl" do 
-      parser = ExternalParameterFinder.new(predefined_parameters)
-      yaml = File.open('./spec/resource/wantedly_scout_dry_run.yaml')
-      params = parser.parse yaml
-      expect(params.map { |el| el[:paramName] }).to eq([
-        "username", "password", "url", "limit", "automation_id", "webhookUrl"
-      ])
+    context "when block not given" do 
+      it "detects username, password, url, limit, automation_id, webhookUrl" do 
+        parser = ExternalParameterFinder.new(predefined_parameters)
+        yaml = File.open('./spec/resource/wantedly_scout_dry_run.yaml')
+        params = parser.parse yaml
+        expect(params.map { |el| el[:paramName] }).to eq([
+          "username", "password", "url", "limit", "automation_id", "webhookUrl"
+        ])
+      end
     end
+
+    context "when block is given" do 
+      it "detects username, password, url, limit, automation_id, webhookUrl processed with a given block" do 
+        parser = ExternalParameterFinder.new(predefined_parameters)
+        yaml = File.open('./spec/resource/wantedly_scout_dry_run.yaml')
+        params = parser.parse yaml do |param_name|
+          { hoge: param_name }
+        end
+        expect(params).to eq([
+          { hoge: "username"}, 
+          { hoge: "password"},
+          { hoge: "url" },
+          { hoge: "limit"},
+          { hoge: "automation_id"},
+          { hoge: "webhookUrl"},
+        ])
+      end
+    end
+
   end
 
   context "when parse wantedly scout send scout yaml" do 
