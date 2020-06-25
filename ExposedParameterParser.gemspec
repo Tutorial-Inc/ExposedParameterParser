@@ -1,7 +1,7 @@
 require_relative 'lib/ExposedParameterParser/r/version'
 
 Gem::Specification.new do |spec|
-  spec.name          = "ExposedParameterParser"
+  spec.name          = "exposed-parameter-parser"
   spec.version       = ExposedParameterParser::VERSION
   spec.authors       = ["Tutorial-Inc"]
   spec.email         = [""]
