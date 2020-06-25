@@ -1,8 +1,8 @@
-require_relative 'lib/js_variable_parser/version'
+require_relative 'lib/ExposedParameterParser/r/version'
 
 Gem::Specification.new do |spec|
-  spec.name          = "js_variable_parser"
-  spec.version       = JsVariableParser::VERSION
+  spec.name          = "ExposedParameterParser"
+  spec.version       = ExposedParameterParser::VERSION
   spec.authors       = ["Tutorial-Inc"]
   spec.email         = [""]
 

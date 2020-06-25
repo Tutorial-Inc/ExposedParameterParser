@@ -1,4 +1,3 @@
-require 'js_variable_parser.rb'
 require 'yaml'
 
 module ExposedParameterParser

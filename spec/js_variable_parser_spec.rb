@@ -1,5 +1,5 @@
 require 'rspec'
-require_relative '../lib/js_variable_parser/js_variable_parser'
+require_relative '../lib/exposed_parameter_parser/js_variable_parser'
 
 RSpec.describe ExposedParameterParser::JsVariableParser do
 

@@ -1,5 +1,5 @@
 require 'rspec'
-require_relative '../lib/js_variable_parser/yaml_parser'
+require_relative '../lib/exposed_parameter_parser/yaml_parser'
 
 RESERVED_VARIABLES = [
   'PROJECT_ID',
