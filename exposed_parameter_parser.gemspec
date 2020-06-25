@@ -5,7 +5,6 @@ Gem::Specification.new do |spec|
   spec.version       = ExposedParameterParser::VERSION
   spec.authors       = ["Tutorial-Inc"]
   spec.email         = [""]
-
   spec.summary       = "JS parser for Ruby"
   spec.description   = ""
   spec.homepage      = "https://github.com/Tutorial-Inc/ExposedParameterParser"
