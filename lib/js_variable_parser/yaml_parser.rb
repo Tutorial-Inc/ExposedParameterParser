@@ -2,7 +2,7 @@ require 'js_variable_parser.rb'
 require 'yaml'
 
 module ExposedParameterParser
-  class ExternalParameterFinder
+  class YamlParser
 
     GLOBAL_OBJECTS = [
      'Infinity' ,
