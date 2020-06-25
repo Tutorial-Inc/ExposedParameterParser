@@ -1,4 +1,8 @@
-require_relative 'lib/exposed_parameter_parser/version'
+# coding: utf-8
+lib = File.expand_path('../lib', __FILE__)
+$LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
+require 'exposed_parameter_parser/version'
+require 'exposed_parameter_parser'
 
 Gem::Specification.new do |spec|
   spec.name          = "exposed-parameter-parser"
