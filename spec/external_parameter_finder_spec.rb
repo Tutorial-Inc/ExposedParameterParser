@@ -15,12 +15,12 @@ STANDARD_LIBRARIES = [
 
 predefined_parameters = RESERVED_VARIABLES + STANDARD_LIBRARIES
 
-RSpec.describe JsVariableParser::ExternalParameterFinder do
+RSpec.describe ExposedParameterParser::ExternalParameterFinder do
 
   context "when parse wantedly scout dry run yaml" do 
     context "when block not given" do 
       it "detects username, password, url, limit, automation_id, webhookUrl" do 
-        parser = JsVariableParser::ExternalParameterFinder.new(predefined_parameters)
+        parser = ExposedParameterParser::ExternalParameterFinder.new(predefined_parameters)
         yaml = File.open('./spec/resource/wantedly_scout_dry_run.yaml')
         params = parser.parse yaml
         expect(params.map { |el| el[:paramName] }).to eq([
@@ -31,7 +31,7 @@ RSpec.describe JsVariableParser::ExternalParameterFinder do
 
     context "when block is given" do 
       it "detects username, password, url, limit, automation_id, webhookUrl processed with a given block" do 
-        parser = JsVariableParser::ExternalParameterFinder.new(predefined_parameters)
+        parser = ExposedParameterParser::ExternalParameterFinder.new(predefined_parameters)
         yaml = File.open('./spec/resource/wantedly_scout_dry_run.yaml')
         params = parser.parse yaml do |param_name|
           { hoge: param_name }
@@ -51,7 +51,7 @@ RSpec.describe JsVariableParser::ExternalParameterFinder do
 
   context "when parse wantedly scout send scout yaml" do 
     it "detects username, password, offer, url, limit, template, automation_id, webhookUrl" do 
-      parser = JsVariableParser::ExternalParameterFinder.new(predefined_parameters)
+      parser = ExposedParameterParser::ExternalParameterFinder.new(predefined_parameters)
       yaml = File.open('./spec/resource/wantedly_scout.yaml')
       params = parser.parse yaml
       expect(params.map { |el| el[:paramName] }).to eq([
@@ -62,7 +62,7 @@ RSpec.describe JsVariableParser::ExternalParameterFinder do
 
   context "when parse wantedly scout send scout yaml with predefined username and password" do 
     it "detects offer, url, limit, template, automation_id, webhookUrl" do
-      parser = JsVariableParser::ExternalParameterFinder.new(["username", "password"] + predefined_parameters)
+      parser = ExposedParameterParser::ExternalParameterFinder.new(["username", "password"] + predefined_parameters)
       yaml = File.open('./spec/resource/wantedly_scout.yaml')
       params = parser.parse yaml
       expect(params.map { |el| el[:paramName] }).to eq([
@@ -73,7 +73,7 @@ RSpec.describe JsVariableParser::ExternalParameterFinder do
 
   context "when intercom api workfor" do 
     it "detects token" do 
-      parser = JsVariableParser::ExternalParameterFinder.new(predefined_parameters)
+      parser = ExposedParameterParser::ExternalParameterFinder.new(predefined_parameters)
       yaml = File.open('./spec/resource/intercom_api.yaml')
       params = parser.parse yaml
       expect(params.map { |el| el[:paramName] }).to eq([
@@ -84,7 +84,7 @@ RSpec.describe JsVariableParser::ExternalParameterFinder do
 
   context "when line api workflow" do 
     it "detects token" do 
-      parser = JsVariableParser::ExternalParameterFinder.new(predefined_parameters)
+      parser = ExposedParameterParser::ExternalParameterFinder.new(predefined_parameters)
       yaml = File.open('./spec/resource/line_api.yaml')
       params = parser.parse yaml
       expect(params.map { |el| el[:paramName] }).to eq([
@@ -95,7 +95,7 @@ RSpec.describe JsVariableParser::ExternalParameterFinder do
 
   context "when seminarshelf to slack workflow" do 
     it "detects minutes, gmailProvider, slackProvider" do 
-      parser = JsVariableParser::ExternalParameterFinder.new(predefined_parameters)
+      parser = ExposedParameterParser::ExternalParameterFinder.new(predefined_parameters)
       yaml = File.open('./spec/resource/seminar_shelf_to_slack.yaml')
       params = parser.parse yaml
       expect(params.map { |el| el[:paramName] }).to eq([
@@ -106,7 +106,7 @@ RSpec.describe JsVariableParser::ExternalParameterFinder do
 
   context "when wantedly scoutlist workflow" do 
     it "detects email, password, queryId, spreadsheetProvider, sheetId" do 
-      parser = JsVariableParser::ExternalParameterFinder.new(predefined_parameters)
+      parser = ExposedParameterParser::ExternalParameterFinder.new(predefined_parameters)
       yaml = File.open('./spec/resource/wantedly_scout_list.yaml')
       params = parser.parse yaml
       expect(params.map { |el| el[:paramName] }).to eq([

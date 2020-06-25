@@ -1,6 +1,6 @@
 require 'strscan'
 
-module JsVariableParser
+module ExposedParameterParser
   class JsVariableParser
 
     attr_accessor :variables, :functions

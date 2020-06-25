@@ -1,7 +1,7 @@
 require 'js_variable_parser.rb'
 require 'yaml'
 
-module JsVariableParser
+module ExposedParameterParser
   class ExternalParameterFinder
 
     GLOBAL_OBJECTS = [
