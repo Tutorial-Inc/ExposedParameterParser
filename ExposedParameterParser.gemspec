@@ -1,4 +1,4 @@
-require_relative 'lib/ExposedParameterParser/r/version'
+require_relative 'lib/ExposedParameterParser/version'
 
 Gem::Specification.new do |spec|
   spec.name          = "exposed-parameter-parser"
