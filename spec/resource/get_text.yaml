@@ -1,0 +1,10 @@
+# 変数に保存
++store_value_1:
+  action>: StoreValue
+  key: example
+  value: ${example}
+
+# テキストを作成
++text_1:
+  action>: Text
+  text: ${example}

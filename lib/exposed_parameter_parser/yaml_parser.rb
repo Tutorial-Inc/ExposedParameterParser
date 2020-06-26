@@ -83,24 +83,27 @@ module ExposedParameterParser
       parsed_yaml.each do |yaml_key, yaml_value|
         if yaml_value['action>'] == 'StoreValue'
           str_yaml_value = yaml_value.to_s
+          undefined_params str_yaml_value
           @stored_variables.push yaml_value['key']
         elsif yaml_value.key?('loop>')
           str_yaml_value = yaml_value['loop>'].to_s
+          undefined_params str_yaml_value
           @stored_variables.push 'i'
           store_values yaml_value['_do']
         elsif yaml_value.key?('for_each>')
           str_yaml_value = yaml_value['for_each>'].to_s
+          undefined_params str_yaml_value
           value = yaml_value['for_each>']
           @stored_variables.push value.keys[0]
           store_values yaml_value['_do']
         elsif yaml_value.key?('if>')
           str_yaml_value = yaml_value['if>'].to_s
+          undefined_params str_yaml_value
           store_values yaml_value['_do']
         else
           str_yaml_value = yaml_value.to_s
+          undefined_params str_yaml_value
         end
-
-        undefined_params str_yaml_value
       end
     end
 
