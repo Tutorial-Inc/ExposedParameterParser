@@ -115,5 +115,16 @@ RSpec.describe ExposedParameterParser::YamlParser do
     end
   end
 
+  context "when get text workflow" do
+    it "detects example" do
+      parser = ExposedParameterParser::YamlParser.new(predefined_parameters)
+      yaml = File.open('./spec/resource/get_text.yaml')
+      params = parser.parse yaml
+      expect(params.map { |el| el[:paramName] }).to eq([
+        "example"
+      ])
+    end
+  end
+
 end
 
