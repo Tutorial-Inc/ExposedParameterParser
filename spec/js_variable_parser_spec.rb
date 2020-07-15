@@ -119,4 +119,72 @@ RSpec.describe ExposedParameterParser::JsVariableParser do
     end
   end
 
+  context "when 10/num" do
+    let(:js) { "num / num" }
+    it "cannot detect ['num', 'num']" do
+      expect(ExposedParameterParser::JsVariableParser.new(js).variables).to eq(['num', 'num'])
+    end
+  end
+
+  context "when 10/num" do
+    let(:js) { "10/num" }
+    it "cannot detect ['num']" do
+      expect(ExposedParameterParser::JsVariableParser.new(js).variables).to eq(['num'])
+    end
+  end
+
+  context "when tmp.replace(/\D/g, '')" do
+    let(:js) { "tmp.replace(/\D/g, hoge)" }
+    it "cannot detect ['tmp']" do 
+      expect(ExposedParameterParser::JsVariableParser.new(js).variables).to eq(['tmp', 'hoge'])
+    end
+  end
+
+  context "when text.replace(/t/g , 'a')" do
+    let(:js) { "text.replace(/abc/g)" }
+    it "cannot detect ['text']" do 
+      expect(ExposedParameterParser::JsVariableParser.new(js).variables).to eq(['text'])
+    end
+  end
+
+  context "when text.replace(/[a-zA-Z]+\w*/)" do
+    let(:js) { "text.replace(/[a-zA-Z]+\w*/)" }
+    it "cannot detect ['text']" do 
+      expect(ExposedParameterParser::JsVariableParser.new(js).variables).to eq(['text'])
+    end
+  end
+
+  context "when object.one.two" do
+    let(:js) { "object.one.two" }
+    it "cannot detect ['object']" do
+      expect(ExposedParameterParser::JsVariableParser.new(js).variables).to eq(['object'])
+    end
+
+    it "cannot detect ['.one.two']" do
+      expect(ExposedParameterParser::JsVariableParser.new(js).functions).to eq(['.one.two'])
+    end
+  end
+
+    context "when object.one.two.three" do
+    let(:js) { "object.one.two.three" }
+    it "cannot detect ['object']" do
+      expect(ExposedParameterParser::JsVariableParser.new(js).variables).to eq(['object'])
+    end
+
+    it "cannot detect ['.one.two.three']" do
+      expect(ExposedParameterParser::JsVariableParser.new(js).functions).to eq(['.one.two.three'])
+    end
+  end
+
+  context "when object.one.two.three.four" do
+    let(:js) { "object.one.two.three.four" }
+    it "cannot detect ['object']" do
+      expect(ExposedParameterParser::JsVariableParser.new(js).variables).to eq(['object'])
+    end
+
+    it "cannot detect ['.one.two.three.four']" do
+      expect(ExposedParameterParser::JsVariableParser.new(js).functions).to eq(['.one.two.three.four'])
+    end
+  end
+
 end

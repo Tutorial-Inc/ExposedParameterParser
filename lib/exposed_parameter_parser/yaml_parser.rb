@@ -57,6 +57,8 @@ module ExposedParameterParser
      'Promise',
      'Reflect',
      'Proxy',
+     'typeof',
+     'instanceof',
     ]
 
     def initialize(predefined_variables)
