@@ -59,6 +59,9 @@ module ExposedParameterParser
      'Proxy',
      'typeof',
      'instanceof',
+     'var',
+     'let',
+     'const',
     ]
 
     def initialize(predefined_variables)

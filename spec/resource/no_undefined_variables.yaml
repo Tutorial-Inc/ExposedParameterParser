@@ -24,3 +24,8 @@
 +text_3:
   action>: Text
   text: ${instanceof text}
+
+# テキストを作成
++text_4:
+  action>: Text
+  text: ${var text = 'hello'}
