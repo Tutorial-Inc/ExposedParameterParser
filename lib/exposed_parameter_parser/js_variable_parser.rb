@@ -29,7 +29,7 @@ module ExposedParameterParser
         @buffer.skip(/[^a-zA-Z0-9\.]/)
 
         # Skip regexp
-        @buffer.skip(/\/.*\/[egimox]*/)
+        @buffer.skip(/\/.*\/[gimsuy]*/)
 
         # Parse variable from code
         parse_variable
