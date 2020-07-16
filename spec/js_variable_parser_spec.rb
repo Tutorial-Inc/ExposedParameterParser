@@ -133,7 +133,7 @@ RSpec.describe ExposedParameterParser::JsVariableParser do
     end
   end
 
-  context "when tmp.replace(/\D/g, '')" do
+  context "when tmp.replace(/\D/g, hoge)" do
     let(:js) { "tmp.replace(/\D/g, hoge)" }
     it "detects ['tmp']" do 
       expect(ExposedParameterParser::JsVariableParser.new(js).variables).to eq(['tmp', 'hoge'])
