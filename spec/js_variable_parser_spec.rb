@@ -114,7 +114,7 @@ RSpec.describe ExposedParameterParser::JsVariableParser do
   # TODO: Support string literal
   context "when '`this is a ${penName}`" do 
     let(:js) { "`this is a ${penName}`" }
-    it "detects penName" do 
+    it "cannot detect penName" do 
       expect(ExposedParameterParser::JsVariableParser.new(js).variables).to eq([])
     end
   end

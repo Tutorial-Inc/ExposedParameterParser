@@ -128,7 +128,7 @@ RSpec.describe ExposedParameterParser::YamlParser do
   end
 
   context "when no_undefined_variables.yaml" do
-    it "detects []" do
+    it "cannot detect" do
       parser = ExposedParameterParser::YamlParser.new(predefined_parameters)
       yaml = File.open('./spec/resource/no_undefined_variables.yaml')
       params = parser.parse yaml
