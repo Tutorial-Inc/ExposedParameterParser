@@ -1,0 +1,31 @@
+# テキストを作成
++text_1:
+  action>: Text
+  text: ${secret('key')}
+
+# 変数に保存
++store_value_1:
+  action>: StoreValue
+  key: text
+  value: 1234abcd56
+
+# 変数に保存
++store_value_2:
+  action>: StoreValue
+  key: hoge
+  value: ${text.replace(/\D/g,"")}
+
+# テキストを作成
++text_2:
+  action>: Text
+  text: ${typeof text}
+
+# テキストを作成
++text_3:
+  action>: Text
+  text: ${instanceof text}
+
+# テキストを作成
++text_4:
+  action>: Text
+  text: ${var text = 'hello'}

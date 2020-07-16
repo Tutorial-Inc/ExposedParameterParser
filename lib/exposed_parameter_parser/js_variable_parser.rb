@@ -28,6 +28,9 @@ module ExposedParameterParser
         # Skip [] space comma...
         @buffer.skip(/[^a-zA-Z0-9\.]/)
 
+        # Skip regexp
+        @buffer.skip(/\/.*\/[gimsuy]*/)
+
         # Parse variable from code
         parse_variable
       end
@@ -46,7 +49,7 @@ module ExposedParameterParser
       # Allow .format('YYYY-MM-DD')
       # Allow .format(formatString)
       # Skip format()
-      chainedFunction = @buffer.scan(/\.[a-zA-Z]+[\w\d]*/)
+      chainedFunction = @buffer.scan(/\.[a-zA-Z]+[\w\d^\.]*/)
 
       # Skip 123
       # Skip 123.123
@@ -70,7 +73,7 @@ module ExposedParameterParser
         # Find end
         matches = @buffer.scan_until(/#{quote}/)
         unless matches
-          raise StandardError.new("Quotes not balanced. Ecpected )")
+          raise StandardError.new("Quotes not balanced. Expected )")
         end
       end
     end

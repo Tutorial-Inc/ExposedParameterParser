@@ -10,7 +10,8 @@ RESERVED_VARIABLES = [
 ]
 
 STANDARD_LIBRARIES = [
-  'moment'
+  'moment',
+  'secret',
 ]
 
 predefined_parameters = RESERVED_VARIABLES + STANDARD_LIBRARIES
@@ -123,6 +124,15 @@ RSpec.describe ExposedParameterParser::YamlParser do
       expect(params.map { |el| el[:paramName] }).to eq([
         "example"
       ])
+    end
+  end
+
+  context "when no_undefined_variables.yaml" do
+    it "cannot detect" do
+      parser = ExposedParameterParser::YamlParser.new(predefined_parameters)
+      yaml = File.open('./spec/resource/no_undefined_variables.yaml')
+      params = parser.parse yaml
+      expect(params.map { |el| el[:paramName] }).to eq([])
     end
   end
 
